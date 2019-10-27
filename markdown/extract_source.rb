@@ -6,32 +6,61 @@ out_file = ARGV[2]
 out_fp=File.open(out_file, "w")
 
 text.each_line {|line|
-  if line =~ /@ref:([^:]*):(.*)$/ then
+  if line =~ /@ref:([^:]*):\s*([\w\._\/]+)/ then
 
     lang = $1
     target_string = $2
 
-    command_string = "cd " + repo_dir + " && git log --name-only --oneline -S\"" + target_string + "\""
+    puts "Found Tag. Language = #{lang}, Message = " + target_string + "\n"
 
-    git_log_result = `#{command_string}`
+    command_string = "git log --name-only --oneline -n 1 -S\"" + target_string + "\""
+
+    git_log_result = ""
+    Dir.chdir(repo_dir) {
+      git_log_result = %x[#{command_string}]
+    }
 
     revision = git_log_result.split(" ")[0]
     command_string = "cd " + repo_dir + " && git checkout " + revision
     git_exec_result = `${command_string}`
 
     git_log_result.split("\n").drop(1).each {|file|
-      command_string = "grep -n \"@{" + target_string + "\" " + repo_dir + "/" + file
+
+      command_string = "grep -E -n \"@{ *" + target_string + "$\" " + repo_dir + "/" + file
       start_line = `#{command_string}`
-      command_string = "grep -n \"@}" + target_string + "\" " + repo_dir + "/" + file
+      command_string = "grep -E -n \"@} *" + target_string + "$\" " + repo_dir + "/" + file
       stop_line  = `#{command_string}`
 
+      # Make Skipping Lines
+      command_string = "grep -E -n " \
+                       "-e \"@{ *" + target_string + " \.\.\.\"" + " " + \
+                       "-e \"@} *" + target_string + " \.\.\.\"" + " " + \
+                       repo_dir + "/" + file
+      skip_lines = `#{command_string}`
       start_line = start_line.split(':')[0].to_i
       stop_line  = stop_line.split(':')[0].to_i
 
-      command_string = "head -n " + (stop_line - 1).to_s + " " + repo_dir + "/" + file \
-                       + " | " + "tail -n +" + (start_line + 1).to_s
+      target_line = Array.new()
+      if skip_lines != NilClass then
+        skip_lines = skip_lines.split("\n").map{|line| line.split(':')[0].to_i}
 
-      code_text = `#{command_string}`
+        target_line = [start_line] + skip_lines + [stop_line]
+        target_line = target_line.each_slice(2).to_a
+      else
+        target_line = [[start_line, stop_line]]
+      end
+
+      printf "  TargetLine = %s\n", target_line.to_s
+
+      code_text = ""
+      target_line.each_with_index {|line, i|
+        command_string = "head -n " + (line[1] - 1).to_s + " " + repo_dir + "/" + file \
+                         + " | " + "tail -n +" + (line[0] + 1).to_s
+        code_text = code_text + `#{command_string}`
+        if i != target_line.length-1 then
+          code_text = code_text + "...\n"
+        end
+      }
 
       out_fp.print "[//]: <> (" + "Revision = " + revision + ", File = " + file + ", Message = " + target_string + ")\n"
       out_fp.print "```" + lang + "\n"
