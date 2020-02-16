@@ -5,8 +5,16 @@ repo_dir = ARGV[1]
 out_file = ARGV[2]
 out_fp=File.open(out_file, "w")
 
+# Atfirst allowing to write output file
+
 text.each_line {|line|
   if line =~ /@ref:([^:]*):\s*([\w\._\/]+)/ then
+
+    # At first go back to head branch
+    Dir.chdir(repo_dir) {
+      command_string = "git checkout myriscvx80_impl"
+      git_log_result = %x[#{command_string}]
+    }
 
     lang = $1
     target_string = $2
@@ -21,12 +29,15 @@ text.each_line {|line|
     }
 
     revision = git_log_result.split(" ")[0]
-    command_string = "cd " + repo_dir + " && git checkout " + revision
-    git_exec_result = `${command_string}`
+    command_string = "git checkout " + revision
+    Dir.chdir(repo_dir) {
+      git_exec_result = %x[#{command_string}]
+    }
 
     git_log_result.split("\n").drop(1).each {|file|
 
       command_string = "grep -E -n \"@{ *" + target_string + "$\" " + repo_dir + "/" + file
+      puts "Command = " + command_string
       start_line = `#{command_string}`
       command_string = "grep -E -n \"@} *" + target_string + "$\" " + repo_dir + "/" + file
       stop_line  = `#{command_string}`
@@ -71,6 +82,12 @@ text.each_line {|line|
   else
     out_fp.print line
   end
+}
+
+# Finally go back to head branch
+Dir.chdir(repo_dir) {
+  command_string = "git checkout myriscvx80_impl"
+  git_log_result = %x[#{command_string}]
 }
 
 out_fp.close
