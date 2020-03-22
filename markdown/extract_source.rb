@@ -65,8 +65,8 @@ text.each_line {|line|
 
         code_text = ""
         target_line.each_with_index {|line, i|
-          command_string = "head -n " + (line[1] - 1).to_s + " " + repo_dir + "/" + file \
-                           + " | " + "tail -n +" + (line[0] + 1).to_s
+          command_string = "git show " + revision + ":" + file + " | head -n " + (line[1] - 1).to_s \
+                           + " | " + "tail -n +" + (line[0] + 1).to_s + " | grep -v @{ | grep -v @}"
           code_text = code_text + `#{command_string}`
           if i != target_line.length-1 then
             code_text = code_text + "...\n"
