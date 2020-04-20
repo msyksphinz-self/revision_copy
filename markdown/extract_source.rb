@@ -21,7 +21,7 @@ text.each_line {|line|
 
     puts "Found Tag. Language = #{lang}, Message = " + target_string + "\n"
 
-    command_string = "git log --name-only --oneline -n 1 -S\"" + target_string + "\""
+    command_string = "git log --name-only --oneline -n 1 --pickaxe-regex -S\"" + target_string + "$\""
 
     git_log_result = ""
     Dir.chdir(repo_dir) {
@@ -67,6 +67,7 @@ text.each_line {|line|
         target_line.each_with_index {|line, i|
           command_string = "git show " + revision + ":" + file + " | head -n " + (line[1] - 1).to_s \
                            + " | " + "tail -n +" + (line[0] + 1).to_s + " | grep -v @{ | grep -v @}"
+          printf "\nCommand = %s", command_string
           code_text = code_text + `#{command_string}`
           if i != target_line.length-1 then
             code_text = code_text + "...\n"
