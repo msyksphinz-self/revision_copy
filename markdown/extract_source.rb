@@ -21,7 +21,7 @@ text.each_line {|line|
 
     puts "Found Tag. Language = #{lang}, Message = " + target_string + "\n"
 
-    command_string = "git log --name-only --oneline -n 1 --since '2020/01/01' --pickaxe-regex -S\"" + target_string + "$\""
+    command_string = "git log --name-only --oneline -n 1 --since '2020/04/01' --pickaxe-regex -S\"" + target_string + "$\""
 
     git_log_result = ""
     Dir.chdir(repo_dir) {
@@ -30,11 +30,16 @@ text.each_line {|line|
 
     revision = git_log_result.split(" ")[0]
     commit_log = git_log_result.split(" ").drop(1)
-    printf "  CommitLog = %s", commit_log
+    puts "  Commit Log = #{commit_log}"
     # command_string = "git checkout " + revision
     # Dir.chdir(repo_dir) {
     #   git_exec_result = %x[#{command_string}]
     # }
+
+    if commit_log == [] then
+      out_fp.print "[//]: <> " + "\"Message = " + target_string + " not found\"\n"
+      next
+    end
 
     Dir.chdir(repo_dir) {
       git_log_result.split("\n").drop(1).each {|file|
