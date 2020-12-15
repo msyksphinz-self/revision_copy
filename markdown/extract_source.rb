@@ -51,7 +51,7 @@ text.each_line {|line|
     code_text = %x[#{command_string}]
 
     out_fp.print "[//]: <> (" + "Code: Tag = " + filename + ")\n"
-    out_fp.print "- `" + file_location.gsub(/#{source_dir}/,'') + "`\n"
+    out_fp.print "- `" + file_location.gsub(/#{source_dir}\//,'') + "`\n"
     out_fp.print "```" + lang + "\n"
     out_fp.print code_text
     out_fp.print "```\n"
@@ -81,7 +81,7 @@ text.each_line {|line|
       code_text = %x[#{command_string}]
     }
     out_fp.print "[//]: <> (" + "Code: Tag = " + target_label + ")\n"
-    out_fp.print "- `" + file_location.gsub(/#{source_dir}/,'') + "`\n"
+    out_fp.print "- `" + file_location.gsub(/#{source_dir}\//,'') + "`\n"
     out_fp.print "```" + lang + "\n"
     out_fp.print code_text
     out_fp.print "```\n"
