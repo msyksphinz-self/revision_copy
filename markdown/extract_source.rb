@@ -40,7 +40,7 @@ text.each_line {|line|
 
     puts "Found While Program. Language = #{lang}, Target Source = " + filename + "\n"
 
-    command_string = "git find " + filename
+    command_string = "git find `basename " + filename + "` | grep " + filename
 
     file_location = ""
     code_text = ""
